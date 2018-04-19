@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 13 12:57:58 2018
+
+@author: brijnanda
+"""
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import datetime
+import seaborn as sns
+import matplotlib as style
+import scipy.stats
+import numpy as np
+from sklearn.svm import SVR
+from sklearn.model_selection import train_test_split
+from sklearn import linear_model
+
+
+
+model_used=[]
+Model_score=[]
+df1=pd.read_csv("/Users/brijnanda/Library/Mobile Documents/com~apple~CloudDocs/apple.csv",parse_dates=[0])
+df2=pd.read_csv("/Users/brijnanda/Library/Mobile Documents/com~apple~CloudDocs/apple_trends.csv",parse_dates=[0])
+
+# The df1 consists of object data type for Date column
+#Change Data type of this column
+
+df1['date'] = pd.to_datetime(df1['date']).dt.date
+df2['Month']=pd.to_datetime(df2['Month']).dt.date
+
+# write funnction to delete dates in df1 before 01-2004
+
+
+
+df1=df1[df1['date'] > datetime.strptime('2004-01-01', '%Y-%m-%d').date()]
+df1['YearMonth'] = df1['date'].map(lambda x: 100*x.year + x.month)
+df2['YearMonth'] = df2['Month'].map(lambda x: 100*x.year + x.month)
+merged = df1.merge(df2, left_on='YearMonth', right_on='YearMonth', how='left')
+merged.drop('Month',axis=1,inplace=True)
+merged.drop('YearMonth',axis=1,inplace=True)
+
+
+
+
+#plt.figure(figsize=(20,10))
+
+
+fig = plt.figure(figsize=(19.20,10.80))
+merged.plot(x='date',y='close',kind='line')
+plt.savefig('/Users/brijnanda/Library/Mobile Documents/com~apple~CloudDocs/plot_name.png', dpi = 300)
+merged.plot(x='date',y='No_of_searches',kind='line')
+merged.plot(x='No_of_searches',y='close',kind='bar')
+scipy.stats.pearsonr(merged['No_of_searches'].values,merged['close'].values)[0]
+
+merged.drop('date',axis=1,inplace=True)
+
+from sklearn.preprocessing import LabelEncoder
+labelencoder=LabelEncoder()
+for col in merged.columns:
+    merged[col] = labelencoder.fit_transform(merged[col])
+    
+y=merged.close
+X_train, X_test, y_train, y_test = train_test_split(merged, y, test_size=0.25)
+
+
+model_used.append("Linear Model")
+lm = linear_model.LinearRegression()
+model = lm.fit(X_train, y_train)
+predictions = lm.predict(X_test)
+plt.scatter(y_test, predictions)
+print(model.score(X_test, y_test))
+Model_score.append(model.score(X_test, y_test))
+
+#K-Folds Cross Validation 
+#It is better to use from sklearn import model_selection
+from sklearn.cross_validation import cross_val_score, cross_val_predict
+from sklearn import metrics
+scores = cross_val_score(model, merged, y, cv=6)
+# Make cross validated predictions
+predictions_CV = cross_val_predict(model,merged, y, cv=6)
+plt.scatter(y, predictions_CV)
+accuracy = metrics.r2_score(y, predictions_CV)  #R^2
+
+
+
+# To test another regression model SVR
+model_used.append("SVR Model")
+svr_lin = SVR(kernel='linear', C=1e3)
+y_lin = svr_lin.fit(X_train, y_train).predict(X_test)
+print("Accuracy of SVR is %f",svr_lin.score(X_test,y_test))
+Model_score.append(svr_lin.score(X_test, y_test))
+
+
+
+
+
+
+        
+        
+
+
+
