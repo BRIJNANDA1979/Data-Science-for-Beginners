@@ -43,8 +43,8 @@ merged.drop('YearMonth',axis=1,inplace=True)
 
 
 
-
-#plt.figure(figsize=(20,10))
+#To plot graph of required size.
+plt.figure(figsize=(20,10))
 
 
 fig = plt.figure(figsize=(19.20,10.80))
@@ -81,7 +81,7 @@ scores = cross_val_score(model, merged, y, cv=6)
 # Make cross validated predictions
 predictions_CV = cross_val_predict(model,merged, y, cv=6)
 plt.scatter(y, predictions_CV)
-accuracy = metrics.r2_score(y, predictions_CV)  #R^2
+accuracy = metrics.r2_score(y, predictions_CV)  #  this is used for model accuracy R^2
 
 
 
